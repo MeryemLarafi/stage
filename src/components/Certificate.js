@@ -326,7 +326,7 @@ const CertificateText = styled.div`
   }
   h2 {
     text-align: center;
-    color: #0066cc;
+    color:rgb(90, 147, 252);
     margin: 20px 0;
     font-size: 24px;
   }
@@ -338,8 +338,8 @@ const StyledTable = styled(Table)`
     overflow: hidden;
   }
   .ant-table-thead > tr > th {
-    background: #0066cc;
-    color: white;
+    background:rgb(241, 241, 248);
+    color: black;
     font-weight: bold;
     text-align: center;
   }
@@ -362,7 +362,7 @@ const SignatureSection = styled.div`
   margin-top: 30px;
   text-align: right;
   font-size: 16px;
-  color: #0066cc;
+  color: #5F9EA0;
 `;
 
 export default Certificate;

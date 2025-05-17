@@ -24,7 +24,7 @@ const Navigation = ({ handleUpload, onCollapse }) => {
       <ToggleButton onClick={toggleCollapsed}>
         <MenuOutlined />
       </ToggleButton>
-      <Logo collapsed={collapsed}>نظام إدارة الانتخابات</Logo>
+      <Logo collapsed={collapsed}>نظام لائحة الناخبين</Logo>
       <StyledMenu mode="inline" defaultSelectedKeys={['1']} collapsed={collapsed}>
         <Menu.Item key="1" icon={<UserOutlined />}>
           <Link to="/">قائمة الناخبين</Link>

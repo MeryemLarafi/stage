@@ -32,6 +32,20 @@ const normalizeValue = (value) => {
   return String(value).trim().replace(/\s+/g, ' ').toLowerCase();
 };
 
+const standardizeMaktabName = (name) => {
+  if (!name) return 'غير معروف';
+  const trimmed = String(name).trim();
+  return /^\d+$/.test(trimmed) ? `مكتب ${trimmed}` : trimmed;
+};
+
+const validateVoter = (voter, existingVoters) => {
+  if (!voter.cin || !voter.serialNumber) return 'Missing CIN or serial number';
+  if (existingVoters.some((v) => normalizeValue(v.cin) === normalizeValue(voter.cin) && normalizeValue(v.serialNumber) === normalizeValue(voter.serialNumber))) {
+    return 'Duplicate voter found';
+  }
+  return null;
+};
+
 const App = () => {
   const [data, setData] = useState(() => {
     const savedData = localStorage.getItem('electionData');
@@ -85,10 +99,10 @@ const App = () => {
     reader.onload = (e) => {
       try {
         const data = new Uint8Array(e.target.result);
-        const workbook = XLSX.read(data, { type: 'array', cellDates: true });
+        const workbook = XLSX.read(data, { type: 'array', cellDates: false, raw: true });
         const sheetName = workbook.SheetNames[0];
         const worksheet = workbook.Sheets[sheetName];
-        const jsonData = XLSX.utils.sheet_to_json(worksheet, { raw: false, dateNF: 'yyyy-mm-dd' });
+        const jsonData = XLSX.utils.sheet_to_json(worksheet, { raw: true, defval: '' });
 
         if (!jsonData.length) {
           toast.error('ملف Excel فارغ!');
@@ -97,7 +111,7 @@ const App = () => {
 
         const rawColumns = Object.keys(jsonData[0] || {});
         console.log('Raw Excel Columns:', rawColumns);
-        console.log('Raw Excel Data:', JSON.stringify(jsonData, null, 2));
+        console.log('Raw Excel Data (first 5 rows):', JSON.stringify(jsonData.slice(0, 5), null, 2));
 
         if (!rawColumns.length) {
           toast.error('ملف Excel غير صالح أو فارغ!');
@@ -115,33 +129,67 @@ const App = () => {
 
         console.log('Column Mapping:', columnMap);
 
-        const transformedData = jsonData.reduce((acc, row) => {
+        const requiredColumns = ['بطاقة التعريف', 'الرقم الترتيبي', 'مكتب التصويت'];
+        const missingColumns = requiredColumns.filter((col) => !columnMap[normalizeColumnName(col)]);
+        if (missingColumns.length) {
+          toast.error(`الأعمدة المطلوبة مفقودة: ${missingColumns.join(', ')}`);
+          return;
+        }
+
+        const existingVoters = [];
+        const transformedData = jsonData.reduce((acc, row, index) => {
           const wilaya = String(row[columnMap[normalizeColumnName('العمالة أو الإقليم')]] || '').trim() || 'غير معروف';
           const jamaa = String(row[columnMap[normalizeColumnName('الجماعة')]] || '').trim() || 'غير معروف';
           const daira = String(row[columnMap[normalizeColumnName('الدائرة الإنتخابية')]] || '').trim() || 'غير معروف';
-          let maktab = String(row[columnMap[normalizeColumnName('مكتب التصويت')]] || '').trim() || 'غير معروف';
-          if (/^\d+$/.test(maktab)) {
-            maktab = `مكتب ${maktab}`;
-          }
+          const maktab = standardizeMaktabName(row[columnMap[normalizeColumnName('مكتب التصويت')]] || '');
 
-          let birthDate = String(row[columnMap[normalizeColumnName('تاريخ الازدياد')]] || '').trim() || 'غير متوفر';
-          if (birthDate && birthDate !== 'غير متوفر') {
+          let birthDateRaw = row[columnMap[normalizeColumnName('تاريخ الازدياد')]] || '';
+          console.log(`Row ${index + 2} - Raw birthDate value: "${birthDateRaw}" (length: ${String(birthDateRaw).length}, type: ${typeof birthDateRaw})`);
+          
+          let birthDate = 'غير متوفر';
+          if (birthDateRaw) {
             try {
-              const parsedDate = moment(birthDate, ['M/D/YYYY', 'MM/DD/YYYY', 'YYYY-MM-DD', 'DD/MM/YYYY'], true);
+              birthDateRaw = String(birthDateRaw).trim().replace(/[\u200B-\u200F\u202A-\u202E]/g, '');
+              console.log(`Row ${index + 2} - Cleaned birthDate value: "${birthDateRaw}"`);
+
+              const parsedDate = moment(birthDateRaw, [
+                'YYYY/MM/DD',
+                'DD/MM/YYYY',
+                'MM/DD/YYYY',
+                'YYYY-MM-DD',
+                'DD-MM-YYYY',
+                'MM-DD-YYYY',
+                'D/M/YYYY',
+                'M/D/YYYY',
+                'YYYY.M.DD',
+                'DD.MM.YYYY',
+                'MM.DD.YYYY',
+              ], true);
               if (parsedDate.isValid()) {
-                birthDate = parsedDate.format('YYYY-MM-DD');
+                birthDate = parsedDate.format('YYYY/MM/DD');
+                console.log(`Row ${index + 2} - Valid date detected: ${birthDate}`);
               } else {
-                const excelSerial = parseFloat(birthDate);
-                if (!isNaN(excelSerial)) {
-                  const jsDate = XLSX.SSF.parse_date_code(excelSerial);
-                  birthDate = moment(jsDate).format('YYYY-MM-DD');
+                const excelSerial = parseFloat(birthDateRaw);
+                if (!isNaN(excelSerial) && excelSerial > 0) {
+                  const jsDate = XLSX.SSF.parse_date_code(excelSerial, { date1904: false });
+                  if (jsDate && jsDate.y && jsDate.m && jsDate.d) {
+                    birthDate = moment({
+                      year: jsDate.y,
+                      month: jsDate.m - 1,
+                      date: jsDate.d
+                    }).format('YYYY/MM/DD');
+                    console.log(`Row ${index + 2} - Converted Excel serial date ${birthDateRaw} to: ${birthDate}`);
+                  } else {
+                    console.warn(`Row ${index + 2} - Invalid Excel serial date: ${birthDateRaw}`);
+                    birthDate = 'غير صالح';
+                  }
                 } else {
-                  console.warn(`Invalid date format for value: ${birthDate}, row:`, row);
+                  console.warn(`Row ${index + 2} - Invalid date format: "${birthDateRaw}"`);
                   birthDate = 'غير صالح';
                 }
               }
             } catch (e) {
-              console.warn('Date parsing error:', e.message, 'for value:', birthDate);
+              console.warn(`Row ${index + 2} - Date processing error: ${e.message}, for value: "${birthDateRaw}"`);
               birthDate = 'غير صالح';
             }
           }
@@ -165,7 +213,14 @@ const App = () => {
             registrationNumber,
           };
 
-          console.log('Parsed Voter:', JSON.stringify(voter, null, 2));
+          const error = validateVoter(voter, existingVoters);
+          if (error) {
+            console.warn(`Row ${index + 2} - Invalid voter: ${error}`);
+            return acc;
+          }
+          existingVoters.push(voter);
+
+          console.log(`Row ${index + 2} - Parsed Voter:`, JSON.stringify(voter, null, 2));
 
           let wilayaObj = acc.find((w) => w.wilaya === wilaya);
           if (!wilayaObj) {
@@ -195,7 +250,7 @@ const App = () => {
           return acc;
         }, []);
 
-        console.log('Transformed Data:', transformedData);
+        console.log('Transformed Data:', JSON.stringify(transformedData, null, 2));
 
         transformedData.forEach((wilaya) => {
           wilaya.jamaat.forEach((jamaa) => {
@@ -244,7 +299,7 @@ const App = () => {
           <StyledMainLayout style={{ marginRight: collapsed ? 80 : 250, transition: 'margin-right 0.3s ease' }}>
             <StyledHeader>
               <Title level={3} style={{ color: 'white', margin: 0 }}>
-                نظام إدارة الانتخابات
+                نظام لائحة الناخبين
               </Title>
             </StyledHeader>
             <StyledContent>
