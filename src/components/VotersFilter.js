@@ -12,59 +12,72 @@ const { Option } = Select;
 const { Search } = Input;
 
 const normalizeValue = (value) => !value ? '' : String(value).trim().replace(/\s+/g, ' ').toLowerCase();
-
 const standardizeMaktabName = (name) => !name ? 'غير معروف' : /^\d+$/.test(String(name).trim()) ? `مكتب ${name}` : name;
-
 const reverseText = (text) => {
     if (!text) return text;
     let reversed = text.split(' ').reverse().join(' ').replace(/\)ة\(/g, '(ة)').replace(/\)(.*?)\(/g, '($1)');
     return reversed;
 };
-
 const formatCurrentDateTime = () => {
     const now = new Date();
     return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')} من ${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
 };
 
+// دالة getDocumentDefinition المعدلة
 const getDocumentDefinition = (voter, jamaaName = 'غير متوفر', maktabName = 'غير متوفر') => ({
     content: [
-        { stack: [{ text: reverseText('المملكة المغربية') }, { text: reverseText('وزارة الداخلية') }, { text: reverseText('إقليم الرحامنة') }], alignment: 'right', margin: [0, 0, 40, 10], style: 'decoratedHeader' },
+        {
+            stack: [
+                { text: reverseText('المملكة المغربية'), style: 'header' },
+                { text: reverseText('وزارة الداخلية'), style: 'header' },
+                { text: reverseText('إقليم الرحامنة'), style: 'header' },
+            ],
+            alignment: 'right',
+            margin: [0, 0, 40, 15],
+        },
         { text: reverseText('الانتخابات الجماعية'), style: 'title', alignment: 'center', color: 'rgb(90, 147, 252)' },
         { text: reverseText('إشعار بمكان التصويت'), style: 'titleSecondary', alignment: 'center', color: 'rgb(90, 147, 252)' },
+        // المعلومات
         {
-            table: {
-                headerRows: 1,
-                widths: ['*', '*'],
-                body: [
-                    [{ text: reverseText('التفاصيل'), style: 'tableHeader', alignment: 'right' }, { text: reverseText('المعلومة'), style: 'tableHeader', alignment: 'right' }],
-                    [{ text: reverseText(`${voter.firstName} ${voter.lastName}`), alignment: 'right' }, { text: reverseText('الاسم الشخصي والعائلي للناخب:'), alignment: 'right' }],
-                    [{ text: reverseText(voter.address || 'غير متوفر'), alignment: 'right' }, { text: reverseText('العنوان:'), alignment: 'right' }],
-                    [{ text: reverseText(jamaaName), alignment: 'right' }, { text: reverseText('جماعة:'), alignment: 'right' }],
-                    [{ text: voter.cin || 'غير متوفر', alignment: 'right' }, { text: reverseText('رقم البطاقة الوطنية للتعريف:'), alignment: 'right' }],
-                    [{ text: reverseText(voter.maktabAddress || 'غير متوفر'), alignment: 'right' }, { text: reverseText('عنوان مكتب التصويت:'), alignment: 'right' }],
-                    [{ text: reverseText(maktabName), alignment: 'right' }, { text: reverseText('رقم مكتب التصويت:'), alignment: 'right' }],
-                    [{ text: voter.serialNumber || 'غير متوفر', alignment: 'right' }, { text: reverseText('الرقم الترتيبي في لائحة الناخبين:'), alignment: 'right' }],
-                    [{ text: formatCurrentDateTime(), alignment: 'right' }, { text: reverseText('تاريخ وساعة الاقتراع:'), alignment: 'right' }],
-                ],
-            },
-            layout: 'lightHorizontalLines',
-            style: 'table',
+            stack: [
+                { text: reverseText(`الاسم الشخصي والعائلي للناخب)ة(: ${voter.firstName} ${voter.lastName}`), style: 'info', alignment: 'right' },
+                { text: reverseText(`العنوان: ${voter.address || 'غير متوفر'}`), style: 'info', alignment: 'right' },
+                { text: reverseText(`جماعة: ${jamaaName}`), style: 'info', alignment: 'right' },
+                { text: reverseText(`رقم البطاقة الوطنية للتعريف: ${voter.cin || 'غير متوفر'}`), style: 'info', alignment: 'right' },
+                { text: reverseText(`عنوان مكتب التصويت: ${voter.maktabAddress || 'غير متوفر'}`), style: 'info', alignment: 'right' },
+                { text: reverseText(`رقم مكتب التصويت: ${maktabName}`), style: 'info', alignment: 'right' },
+                { text: reverseText(`الرقم الترتيبي في لائحة الناخبين: ${voter.serialNumber || 'غير متوفر'}`), style: 'info', alignment: 'right' },
+                { text: reverseText(`تاريخ وساعة الاقتراع: ${formatCurrentDateTime()}`), style: 'info', alignment: 'right' },
+            ],
+            margin: [0, 10, 40, 15],
         },
-        { text: reverseText('ملحوظة: لا يعتبر هذا الإشعار ضروريا للتصويت. ويتعين على الناخب الإدلاء بالبطاقة الوطنية للتعريف عند التصويت.'), style: 'note', color: 'red', alignment: 'right' },
-        { stack: [{ text: reverseText('طابع'), style: 'footerStamp' }, { text: reverseText('السلطة الإدارية المحلية'), style: 'footer' }], alignment: 'left', margin: [40, 10, 0, 0], alignment: 'center' },
+        {
+            text: reverseText('ملحوظة: لا يعتبر هذا الإشعار ضروريا للتصويت. ويتعين على الناخب الإدلاء بالبطاقة الوطنية للتعريف عند التصويت.'),
+            style: 'note',
+            color: 'black',
+            alignment: 'right',
+            margin: [0, 15, 40, 15],
+        },
+        {
+            stack: [
+                { text: reverseText('طابع'), style: 'footerStamp' },
+                { text: reverseText('السلطة الإدارية المحلية'), style: 'footer' },
+            ],
+            alignment: 'left', // محاذاة إلى اليسار
+            margin: [40, 15, 0, 0],
+        },
     ],
     styles: {
-        decoratedHeader: { fontSize: 13, bold: true, color: '#1a1a1a', margin: [0, 0, 0, 2], lineHeight: 1.0, font: 'Amiri' },
-        title: { fontSize: 16, bold: true, margin: [0, 10, 0, 2], font: 'Amiri' },
-        titleSecondary: { fontSize: 16, bold: true, margin: [0, 2, 0, 10], font: 'Amiri' },
-        table: { margin: [0, 10, 0, 10], fontSize: 12, font: 'Amiri' },
-        tableHeader: { bold: true, fillColor: 'rgb(90, 147, 252)', color: 'white', alignment: 'right', font: 'Amiri' },
-        note: { fontSize: 10, margin: [0, 10, 0, 10], font: 'Amiri' },
+        header: { fontSize: 13, bold: true, color: '#1a1a1a', margin: [0, 0, 0, 3], font: 'Amiri' },
+        title: { fontSize: 16, bold: true, margin: [0, 10, 0, 5], font: 'Amiri' },
+        titleSecondary: { fontSize: 16, bold: true, margin: [0, 5, 0, 10], font: 'Amiri' },
+        info: { fontSize: 13, margin: [0, 8, 0, 8], font: 'Amiri' },
+        note: { fontSize: 10, font: 'Amiri' },
         footer: { fontSize: 12, bold: true, font: 'Amiri' },
-        footerStamp: { fontSize: 12, bold: true, font: 'Amiri', margin: [0, 0, 0, 2] },
+        footerStamp: { fontSize: 12, bold: true, font: 'Amiri', margin: [0, 0, 0, 3] },
     },
     defaultStyle: { font: 'Amiri', alignment: 'right' },
-    pageMargins: [40, 40, 40, 40],
+    pageMargins: [50, 50, 50, 50],
 });
 
 const VotersFilter = ({ data, setData, cancelledVoters, setCancelledVoters }) => {
@@ -80,7 +93,6 @@ const VotersFilter = ({ data, setData, cancelledVoters, setCancelledVoters }) =>
     useEffect(() => {
         let voters = [];
         try {
-            // إذا كان فيه CIN مدخل، نبحثو غير على الناخب ديال هذاك CIN
             if (searchCIN) {
                 (data || []).forEach((wilaya) => {
                     (wilaya.jamaat || []).forEach((jamaa) => {
@@ -94,8 +106,6 @@ const VotersFilter = ({ data, setData, cancelledVoters, setCancelledVoters }) =>
                         });
                     });
                 });
-
-                // إذا ما لقيناش الناخب في data، نشوفو في cancelledVoters
                 if (voters.length === 0) {
                     const isCancelled = (cancelledVoters || []).some((voter) =>
                         normalizeValue(voter.cin) === normalizeValue(searchCIN)
@@ -107,7 +117,6 @@ const VotersFilter = ({ data, setData, cancelledVoters, setCancelledVoters }) =>
                     }
                 }
             } else {
-                // إذا ما كانش CIN، نطبقو الفلاتر العادية
                 (data || []).forEach((wilaya) => {
                     if (!selectedWilaya || wilaya.wilaya === selectedWilaya) {
                         (wilaya.jamaat || []).forEach((jamaa) => {
@@ -126,8 +135,6 @@ const VotersFilter = ({ data, setData, cancelledVoters, setCancelledVoters }) =>
                     }
                 });
             }
-
-            // ترتيب الناخبين حسب serialNumber
             voters.sort((a, b) =>
                 (a.serialNumber && /^\d+$/.test(a.serialNumber) ? a.serialNumber : '0').localeCompare(
                     b.serialNumber && /^\d+$/.test(b.serialNumber) ? b.serialNumber : '0',
@@ -270,7 +277,7 @@ const VotersFilter = ({ data, setData, cancelledVoters, setCancelledVoters }) =>
                 content,
                 styles: getDocumentDefinition({}).styles,
                 defaultStyle: { font: 'Amiri', alignment: 'right' },
-                pageMargins: [40, 40, 40, 40]
+                pageMargins: [50, 50, 50, 50]
             }).download('all_voters_voting_notices.pdf');
             message.success({ content: 'تمت عملية التنزيل بنجاح', key: 'pdfGeneration' });
         } catch (error) {

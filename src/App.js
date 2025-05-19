@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react';
-import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import React, { useState, useEffect, useContext } from 'react';
+import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { Layout, ConfigProvider, Typography, Button } from 'antd';
 import styled, { keyframes } from 'styled-components';
 import * as XLSX from 'xlsx';
@@ -13,6 +13,9 @@ import VotersFilter from './components/VotersFilter';
 import Dashboard from './components/Dashboard';
 import Certificate from './components/Certificate';
 import CancellationList from './components/CancellationList';
+import GeneralElections from './components/GeneralElections';
+import Login from './components/Login';
+import { AuthContext, AuthProvider } from './AuthContext';
 
 const { Header, Content, Footer } = Layout;
 const { Title } = Typography;
@@ -44,6 +47,12 @@ const validateVoter = (voter, existingVoters) => {
     return 'Duplicate voter found';
   }
   return null;
+};
+
+// مكون لحماية الصفحات
+const ProtectedRoute = ({ children }) => {
+  const { isAuthenticated } = useContext(AuthContext);
+  return isAuthenticated ? children : <Navigate to="/login" />;
 };
 
 const App = () => {
@@ -294,34 +303,85 @@ const App = () => {
   return (
     <Router>
       <ConfigProvider locale={arEG} direction="rtl">
-        <StyledLayout>
-          <Navigation handleUpload={handleUpload} onCollapse={handleCollapse} />
-          <StyledMainLayout style={{ marginRight: collapsed ? 80 : 250, transition: 'margin-right 0.3s ease' }}>
-            <StyledHeader>
-              <Title level={3} style={{ color: 'white', margin: 0 }}>
-                نظام لائحة الناخبين
-              </Title>
-            </StyledHeader>
-            <StyledContent>
-              <ContentCard>
-                <Button
-                  type="danger"
-                  onClick={handleClearData}
-                  style={{ marginBottom: 20 }}
-                >
-                  مسح جميع البيانات
-                </Button>
-                <Routes>
-                  <Route path="/" element={<VotersFilter data={data} setData={setData} cancelledVoters={cancelledVoters} setCancelledVoters={setCancelledVoters} />} />
-                  <Route path="/dashboard" element={<Dashboard data={data} />} />
-                  <Route path="/certificate" element={<Certificate data={data} />} />
-                  <Route path="/cancellation" element={<CancellationList data={data} setData={setData} cancelledVoters={cancelledVoters} setCancelledVoters={setCancelledVoters} pendingCancelledVoters={pendingCancelledVoters} setPendingCancelledVoters={setPendingCancelledVoters} />} />
-                </Routes>
-              </ContentCard>
-            </StyledContent>
-            <StyledFooter>© 2025 نظام إدارة الانتخابات</StyledFooter>
-          </StyledMainLayout>
-        </StyledLayout>
+        <AuthProvider>
+          <StyledLayout>
+            <Navigation handleUpload={handleUpload} onCollapse={handleCollapse} />
+            <StyledMainLayout style={{ marginRight: collapsed ? 80 : 250, transition: 'margin-right 0.3s ease' }}>
+              <StyledHeader>
+                <Title level={3} style={{ color: 'white', margin: 0 }}>
+                  نظام لائحة الناخبين
+                </Title>
+              </StyledHeader>
+              <StyledContent>
+                <ContentCard>
+                  <Button
+                    type="danger"
+                    onClick={handleClearData}
+                    style={{ marginBottom: 20 }}
+                  >
+                    مسح جميع البيانات
+                  </Button>
+                  <Routes>
+                    <Route path="/login" element={<Login />} />
+                    <Route
+                      path="/"
+                      element={
+                        <ProtectedRoute>
+                          <VotersFilter
+                            data={data}
+                            setData={setData}
+                            cancelledVoters={cancelledVoters}
+                            setCancelledVoters={setCancelledVoters}
+                          />
+                        </ProtectedRoute>
+                      }
+                    />
+                    <Route
+                      path="/dashboard"
+                      element={
+                        <ProtectedRoute>
+                          <Dashboard data={data} />
+                        </ProtectedRoute>
+                      }
+                    />
+                    <Route
+                      path="/certificate"
+                      element={
+                        <ProtectedRoute>
+                          <Certificate data={data} />
+                        </ProtectedRoute>
+                      }
+                    />
+                    <Route
+                      path="/cancellation"
+                      element={
+                        <ProtectedRoute>
+                          <CancellationList
+                            data={data}
+                            setData={setData}
+                            cancelledVoters={cancelledVoters}
+                            setCancelledVoters={setCancelledVoters}
+                            pendingCancelledVoters={pendingCancelledVoters}
+                            setPendingCancelledVoters={setPendingCancelledVoters}
+                          />
+                        </ProtectedRoute>
+                      }
+                    />
+                    <Route
+                      path="/general-elections"
+                      element={
+                        <ProtectedRoute>
+                          <GeneralElections data={data} />
+                        </ProtectedRoute>
+                      }
+                    />
+                  </Routes>
+                </ContentCard>
+              </StyledContent>
+              <StyledFooter>© 2025 نظام إدارة الانتخابات</StyledFooter>
+            </StyledMainLayout>
+          </StyledLayout>
+        </AuthProvider>
       </ConfigProvider>
     </Router>
   );
