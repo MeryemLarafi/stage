@@ -8,7 +8,6 @@ import moment from 'moment';
 pdfMake.vfs = amiriFontVFS;
 pdfMake.fonts = { Amiri: { normal: 'Amiri-Regular.ttf', bold: 'Amiri-Regular.ttf', italics: 'Amiri-Regular.ttf', bolditalics: 'Amiri-Regular.ttf' } };
 
-// إعداد moment لاستخدام أسماء الأشهر بالعربية
 moment.defineLocale('ar', {
   months: 'يناير_فبراير_مارس_أبريل_مايو_يونيو_يوليو_أغسطس_سبتمبر_أكتوبر_نوفمبر_ديسمبر'.split('_'),
   monthsShort: 'يناير_فبراير_مارس_أبريل_مايو_يونيو_يوليو_أغسطس_سبتمبر_أكتوبر_نوفمبر_ديسمبر'.split('_'),
@@ -59,8 +58,8 @@ moment.defineLocale('ar', {
     yy: '%d سنوات',
   },
   week: {
-    dow: 6, // Saturday is the first day of the week.
-    doy: 12, // The week that contains Jan 12th is the first week of the year.
+    dow: 6,
+    doy: 12,
   },
 });
 
@@ -69,10 +68,17 @@ const { Option } = Select;
 
 const normalizeValue = (value) => !value ? '' : String(value).trim().replace(/\s+/g, ' ').toLowerCase();
 const standardizeMaktabName = (name) => !name ? 'غير معروف' : /^\d+$/.test(String(name).trim()) ? `مكتب ${name}` : name;
+const getMaktabNumber = (name) => {
+  if (!name) return 'غير معروف';
+  const match = String(name).match(/\d+/);
+  return match ? match[0] : name;
+};
 
 const reverseText = (text) => {
   if (!text) return text;
-  let reversed = text.split(' ').reverse().join(' ').replace(/\)ة\(/g, '(ة)').replace(/\)(.*?)\(/g, '($1)');
+  const words = text.split(' ').filter(word => word);
+  let reversed = words.reverse().join(' ');
+  reversed = reversed.replace(/\)ة\(/g, '(ة)').replace(/\)(.*?)\(/g, '($1)');
   return reversed;
 };
 
@@ -116,111 +122,444 @@ const numberToArabicWords = (number) => {
   return words.trim();
 };
 
-const getDocumentDefinition = (jamaaName, dairaData, selectedDate) => {
+const getDocumentDefinition = (jamaaName, dairaData, selectedDate, selectedDaira, selectedMaktab) => {
   const customDate = selectedDate ? moment(selectedDate).locale('ar').format('D MMMM YYYY') : '19 مايو 2025';
   const place = jamaaName;
 
-  // بناء محتوى الـ PDF
   const content = [];
 
-  // Page 1: العنوان في الأعلى
   content.push({
     stack: [
-      { text: 'إقليم الرحامنة', style: 'header' },
-      { text: `جماعة: ${jamaaName}             لائحة عدد المسجلين على صعيد الدائرة الانتخابية رقم: ${dairaData[0].dairaName}`, style: 'title' },
+      {
+        text: reverseText('إقليم الرحامنة'.split(' ').join('         ')),
+        style: 'headerRightUnderlined',
+        alignment: 'right',
+        margin: [0, 0, 0, 2]
+      },
+      {
+        text: reverseText(`جماعة: ${jamaaName}`.split(' ').join('         ')),
+        style: 'subheaderRightUnderlined',
+        alignment: 'right',
+        margin: [0, 0, 0, 60]
+      },
+      {
+        text: selectedMaktab
+          ? reverseText('اللائحة الانتخابية العامة'.split(' ').join('         '))
+          : reverseText(`اللائحة الانتخابية العامة الخاصة بجماعة: ${jamaaName}`.split(' ').join('         ')),
+        style: 'mainTitleUnderlined',
+        alignment: 'center',
+        margin: [0, 150, 0, 20]
+      },
     ],
-    alignment: 'center',
-    margin: [0, 50, 0, 0],
+    margin: [40, 40, 40, 40],
     pageBreak: 'after',
   });
 
-  // 3 صفحات لكل دائرة
-  dairaData.forEach(({ dairaName, voters }, index) => {
-    const dairaVotersCount = voters.length;
-    const dairaVotersInWords = numberToArabicWords(dairaVotersCount);
-
-    // Page 2: معلومات الدائرة مع العنوان في الأعلى
-    content.push({
-      stack: [
-        { text: `جماعة: ${jamaaName}             لائحة عدد المسجلين على صعيد الدائرة الانتخابية رقم: ${dairaName}`, style: 'title' },
-        { text: `جماعة: ${jamaaName}`, style: 'subheader' },
-        { text: `الدائرة الإنتخابية الجماعية رقم: ${dairaName}`, style: 'subheader' },
-      ],
-      alignment: 'center',
-      margin: [0, 50, 0, 0],
-      pageBreak: 'after',
-    });
-
-    // Page 3: جدول الناخبين مع رأس بإطار
-    content.push({
-      stack: [
-        { text: `جماعة: ${jamaaName}             لائحة عدد المسجلين على صعيد الدائرة الانتخابية رقم: ${dairaName}`, style: 'title', alignment: 'right', margin: [0, 20, 0, 10] },
-        {
-          table: {
-            headerRows: 1,
-            widths: ['auto', 'auto', 'auto', 'auto', 'auto', '*', 'auto'],
-            body: [
-              [
-                { text: 'ملاحظات', style: 'tableHeader', alignment: 'right', fillColor: 'white' },
-                { text: 'رقم الناخب', style: 'tableHeader', alignment: 'right', fillColor: 'white' },
-                { text: 'وثيقة التعريف', style: 'tableHeader', alignment: 'right', fillColor: 'white' },
-                { text: 'العنوان', style: 'tableHeader', alignment: 'right', fillColor: 'white' },
-                { text: 'تاريخ الازدياد', style: 'tableHeader', alignment: 'right', fillColor: 'white' },
-                { text: 'الاسم الكامل', style: 'tableHeader', alignment: 'right', fillColor: 'white' },
-                { text: 'الترتيب', style: 'tableHeader', alignment: 'right', fillColor: 'white' },
-              ],
-              ...voters.map((voter, index) => [
-                '', // ملاحظات فارغة
-                voter.serialNumber || 'غير متوفر',
-                voter.cin || 'غير متوفر',
-                voter.address || 'غير متوفر',
-                voter.birthDate || 'غير متوفر',
-                `${voter.firstName} ${voter.lastName}`,
-                String(index + 1),
-              ]),
+  if (selectedMaktab) {
+    const maktabNumber = getMaktabNumber(selectedMaktab);
+    dairaData.forEach(({ dairaName, voters }) => {
+      content.push({
+        stack: [
+          {
+            columns: [
+              {
+                text: reverseText(`الدائرة الإنتخابية الجماعية رقم: ${dairaName}`.split(' ').join('         ')),
+                style: 'subheader',
+                alignment: 'left',
+                width: 'auto'
+              },
+              {
+                text: '',
+                width: '*'
+              },
+              {
+                text: reverseText(`جماعة: ${jamaaName}`.split(' ').join('         ')),
+                style: 'subheaderUnderlinedRight',
+                alignment: 'right',
+                width: 'auto'
+              },
             ],
+            margin: [0, 5, 0, 120]
           },
-          layout: {
-            hLineWidth: (i, node) => (i === 0 || i === 1 || i === node.table.body.length) ? 1 : 0.5, // إطار كامل حول الرأس
-            vLineWidth: (i) => 1, // خطوط عمودية
-            hLineColor: () => '#000000',
-            vLineColor: () => '#000000',
+          {
+            text: reverseText(`لائحة المسجلين على صعيد الدائرة الانتخابية رقم: ${dairaName}`.split(' ').join('         ')),
+            style: 'subheader',
+            alignment: 'center',
+            margin: [0, 0, 0, 10]
           },
-          style: 'table',
-        },
-      ],
-      alignment: 'right',
-      margin: [0, 20, 0, 0],
-      pageBreak: 'after',
+          {
+            text: reverseText(`مكتب التصويت رقم: ${maktabNumber}`.split(' ').join('         ')),
+            style: 'subheader',
+            alignment: 'center',
+            margin: [0, 10, 0, 0]
+          },
+        ],
+        margin: [40, 40, 40, 40],
+        pageBreak: 'after',
+      });
+
+      const votersPerPage = 20;
+      const totalPages = Math.ceil(voters.length / votersPerPage);
+
+      for (let page = 0; page < totalPages; page++) {
+        const start = page * votersPerPage;
+        const end = Math.min(start + votersPerPage, voters.length);
+        const pageVoters = voters.slice(start, end);
+
+        content.push({
+          stack: [
+            {
+              columns: [
+                {
+                  text: reverseText(`مكتب التصويت رقم: ${maktabNumber}`.split(' ').join('         ')),
+                  style: 'subheader',
+                  alignment: 'left',
+                  width: 'auto'
+                },
+                {
+                  text: reverseText(`لائحة المسجلين على صعيد الدائرة الانتخابية رقم: ${dairaName}`.split(' ').join('         ')),
+                  style: 'subheader',
+                  alignment: 'center',
+                  width: '*'
+                },
+                {
+                  text: reverseText(`جماعة: ${jamaaName}`.split(' ').join('         ')),
+                  style: 'subheaderUnderlined',
+                  alignment: 'right',
+                  width: 'auto'
+                },
+              ],
+              margin: [0, 20, 0, 10]
+            },
+            {
+              table: {
+                headerRows: 1,
+                widths: ['*', 'auto', 'auto', 'auto', 'auto', 'auto', 'auto'],
+                body: [
+                  [
+                    { text: reverseText('ملاحظات'.split(' ').join('         ')), style: 'tableHeader', alignment: 'right', fillColor: 'white' },
+                    { text: reverseText('رقم الناخب'.split(' ').join('         ')), style: 'tableHeader', alignment: 'right', fillColor: 'white' },
+                    { text: reverseText('وثيقة التعريف'.split(' ').join('         ')), style: 'tableHeader', alignment: 'right', fillColor: 'white' },
+                    { text: reverseText('تاريخ الازدياد'.split(' ').join('         ')), style: 'tableHeader', alignment: 'right', fillColor: 'white' },
+                    { text: reverseText('العنوان'.split(' ').join('         ')), style: 'tableHeader', alignment: 'right', fillColor: 'white' },
+                    { text: reverseText('الاسم الكامل'.split(' ').join('         ')), style: 'tableHeader', alignment: 'right', fillColor: 'white' },
+                    { text: reverseText('رقم الترتيبي'.split(' ').join('         ')), style: 'tableHeader', alignment: 'right', fillColor: 'white' },
+                  ],
+                  ...pageVoters.map((voter, idx) => [
+                    reverseText(''),
+                    reverseText(String(voter.serialNumber || 'غير متوفر')),
+                    reverseText(voter.cin || 'غير متوفر'),
+                    reverseText(voter.birthDate || 'غير متوفر'),
+                    reverseText(voter.address || 'غير متوفر'),
+                    reverseText(`${voter.firstName || ''} ${voter.lastName || ''}`),
+                    reverseText(String(start + idx + 1)),
+                  ]),
+                ],
+              },
+              layout: {
+                hLineWidth: (i, node) => (i === 0 || i === 1 || i === node.table.body.length) ? 1 : 0.5,
+                vLineWidth: () => 0,
+                hLineColor: () => '#000000',
+                vLineColor: () => '#000000',
+              },
+              style: 'table',
+              margin: [0, 10, 0, 20]
+            },
+            {
+              text: reverseText(`${page + 1}/${totalPages}`.split(' ').join('         ')),
+              style: 'pageNumber',
+              absolutePosition: { x: 40, y: 750 },
+            }
+          ],
+          alignment: 'right',
+          margin: [0, 30, 0, 0],
+          pageBreak: page < totalPages - 1 ? 'after' : undefined,
+        });
+      }
+    });
+  } else {
+    dairaData.forEach(({ dairaName, voters }, index) => {
+      const dairaVotersCount = voters.length;
+      const dairaVotersInWords = numberToArabicWords(dairaVotersCount);
+
+      content.push({
+        stack: [
+          {
+            columns: [
+              {
+                text: reverseText(`لائحة المسجلين على صعيد الدائرة الانتخابية رقم: ${dairaName}`.split(' ').join('         ')),
+                style: 'subheader',
+                alignment: 'left',
+                width: 'auto'
+              },
+              {
+                text: '',
+                width: '*'
+              },
+              {
+                text: reverseText(`جماعة: ${jamaaName}`.split(' ').join('         ')),
+                style: 'subheaderUnderlinedRight',
+                alignment: 'right',
+                width: 'auto'
+              },
+            ],
+            margin: [0, 5, 0, 120]
+          },
+          {
+            text: reverseText(`جماعة: ${jamaaName}`.split(' ').join('         ')),
+            style: 'subheader',
+            alignment: 'center',
+            margin: [0, 0, 0, 5]
+          },
+          {
+            text: reverseText(`الدائرة الإنتخابية الجماعية رقم: ${dairaName}`.split(' ').join('         ')),
+            style: 'subheader',
+            alignment: 'center',
+            margin: [0, 10, 0, 0]
+          },
+        ],
+        margin: [40, 40, 40, 40],
+        pageBreak: 'after',
+      });
+
+      const votersPerPage = 20;
+      const totalPages = Math.ceil(voters.length / votersPerPage);
+
+      for (let page = 0; page < totalPages; page++) {
+        const start = page * votersPerPage;
+        const end = Math.min(start + votersPerPage, voters.length);
+        const pageVoters = voters.slice(start, end);
+
+        content.push({
+          stack: [
+            {
+              columns: [
+                {
+                  text: reverseText(`لائحة المسجلين على صعيد الدائرة الانتخابية رقم: ${dairaName}`.split(' ').join('         ')),
+                  style: 'subheader',
+                  alignment: 'left',
+                  width: 'auto'
+                },
+                {
+                  text: '',
+                  width: '*'
+                },
+                {
+                  text: reverseText(`جماعة: ${jamaaName}`.split(' ').join('         ')),
+                  style: 'subheaderUnderlined',
+                  alignment: 'right',
+                  width: 'auto'
+                },
+              ],
+              margin: [0, 20, 0, 10]
+            },
+            {
+              table: {
+                headerRows: 1,
+                widths: ['*', 'auto', 'auto', 'auto', 'auto', 'auto', 'auto'],
+                body: [
+                  [
+                    { text: reverseText('ملاحظات'.split(' ').join('         ')), style: 'tableHeader', alignment: 'right', fillColor: 'white' },
+                    { text: reverseText('رقم الناخب'.split(' ').join('         ')), style: 'tableHeader', alignment: 'right', fillColor: 'white' },
+                    { text: reverseText('وثيقة التعريف'.split(' ').join('         ')), style: 'tableHeader', alignment: 'right', fillColor: 'white' },
+                    { text: reverseText('العنوان'.split(' ').join('         ')), style: 'tableHeader', alignment: 'right', fillColor: 'white' },
+                    { text: reverseText('تاريخ الازدياد'.split(' ').join('         ')), style: 'tableHeader', alignment: 'right', fillColor: 'white' },
+                    { text: reverseText('الاسم الكامل'.split(' ').join('         ')), style: 'tableHeader', alignment: 'right', fillColor: 'white' },
+                    { text: reverseText('الترتيب'.split(' ').join('         ')), style: 'tableHeader', alignment: 'right', fillColor: 'white' },
+                  ],
+                  ...pageVoters.map((voter, idx) => [
+                    reverseText(''),
+                    reverseText(String(voter.serialNumber || 'غير متوفر')),
+                    reverseText(voter.cin || 'غير متوفر'),
+                    reverseText(voter.address || 'غير متوفر'),
+                    reverseText(voter.birthDate || 'غير متوفر'),
+                    reverseText(`${voter.firstName || ''} ${voter.lastName || ''}`),
+                    reverseText(String(start + idx + 1)),
+                  ]),
+                ],
+              },
+              layout: {
+                hLineWidth: (i, node) => (i === 0 || i === 1 || i === node.table.body.length) ? 1 : 0.5,
+                vLineWidth: () => 0,
+                hLineColor: () => '#000000',
+                vLineColor: () => '#000000',
+              },
+              style: 'table',
+              margin: [0, 10, 0, 20]
+            },
+            {
+              text: reverseText(`${page + 1}/${totalPages}`.split(' ').join('         ')),
+              style: 'pageNumber',
+              absolutePosition: { x: 40, y: 750 },
+            }
+          ],
+          alignment: 'right',
+          margin: [0, 30, 0, 0],
+          pageBreak: page < totalPages - 1 ? 'after' : 'after',
+        });
+      }
+
+      content.push({
+        stack: [
+          {
+            columns: [
+              {
+                text: reverseText(`لائحة المسجلين على صعيد الدائرة الانتخابية رقم: ${dairaName}`.split(' ').join('         ')),
+                style: 'subheader',
+                alignment: 'left',
+                width: 'auto'
+              },
+              {
+                text: '',
+                width: '*'
+              },
+              {
+                text: reverseText(`جماعة: ${jamaaName}`.split(' ').join('         ')),
+                style: 'subheaderUnderlinedRight',
+                alignment: 'right',
+                width: 'auto'
+              },
+            ],
+            margin: [0, 0, 0, 100],
+            direction: 'rtl'
+          },
+          {
+            text: reverseText(`حصر عدد المسجلين على صعيد الدائرة الانتخابية رقم: ${dairaName}`.split(' ').join('         ')),
+            style: 'subheader',
+            alignment: 'center',
+            margin: [0, 30, 0, 30]
+          },
+          {
+            columns: [
+              {
+                text: reverseText(`في: ${dairaVotersCount} ناخبا`.split(' ').join('         ')),
+                style: 'subheader',
+                alignment: 'left',
+                width: 'auto'
+              },
+              {
+                text: '',
+                width: '*'
+              },
+              {
+                text: reverseText(`لجماعة: ${jamaaName}`.split(' ').join('         ')),
+                style: 'subheaderUnderlinedRight',
+                alignment: 'right',
+                width: 'auto'
+              }
+            ],
+            margin: [0, 30, 0, 30],
+            direction: 'rtl'
+          },
+          {
+            text: reverseText(`أي: ${dairaVotersInWords.split(' ').join('         ')} ناخبا`.split(' ').join('         ')),
+            style: 'subheader',
+            alignment: 'center',
+            margin: [0, 30, 0, 30]
+          },
+          {
+            text: reverseText(`وحرر ب ${place} في: ${customDate}`.split(' ').join('         ')),
+            style: 'subheader',
+            alignment: 'center',
+            margin: [0, 30, 0, 80]
+          },
+          {
+            text: reverseText('رئيس اللجنة الإدارية'.split(' ').join('         ')),
+            style: 'signatureUnderlinedCentered',
+            alignment: 'center',
+            margin: [0, 80, 0, 0]
+          }
+        ],
+        alignment: 'right',
+        direction: 'rtl',
+        margin: [40, 40, 40, 40],
+        pageBreak: 'after',
+      });
     });
 
-    // Page 4: إحصائيات مع العنوان في الأعلى
-    content.push({
-      stack: [
-        { text: `جماعة: ${jamaaName}             لائحة عدد المسجلين على صعيد الدائرة الانتخابية رقم: ${dairaName}`, style: 'title', alignment: 'center' },
-        { text: `حصر عدد المسجلين على صعيد الدائرة الانتخابية رقم :${dairaName}`, style: 'subheader', alignment: 'center', margin: [0, 20, 0, 10] },
-        { text: `لجماعة: ${jamaaName}                           في: ${dairaVotersCount}        ناخبا.`, style: 'subheader', alignment: 'center', margin: [0, 0, 0, 10] },
-        { text: `أي: ${dairaVotersInWords}                                               ناخبا.`, style: 'subheader', alignment: 'center', margin: [0, 0, 0, 10] },
-        { text: `وحرر ب${place} في: ${customDate}`, style: 'subheader', alignment: 'center', margin: [0, 10, 0, 0] },
-        { text: 'رئيس اللجنة الإدارية', style: 'signature', alignment: 'center', margin: [0, 20, 0, 0] },
-      ],
-      alignment: 'center',
-      margin: [0, 20, 0, 0],
-      pageBreak: dairaData.length - 1 === index ? undefined : 'after', // لا نضيف pageBreak لآخر دائرة
-    });
-  });
+    if (!selectedDaira) {
+      const totalVotersCount = dairaData.reduce((sum, { voters }) => sum + voters.length, 0);
+      const totalVotersInWords = numberToArabicWords(totalVotersCount);
+
+      content.push({
+        stack: [
+          {
+            text: reverseText(`جماعة: ${jamaaName}`.split(' ').join('         ')),
+            style: 'subheaderRightUnderlined',
+            alignment: 'right',
+            margin: [0, 0, 0, 80]
+          },
+          {
+            columns: [
+              {
+                text: reverseText(`في: ${totalVotersCount} ناخبا`.split(' ').join('         ')),
+                style: 'subheader',
+                alignment: 'center',
+                width: 'auto'
+              },
+              {
+                text: '',
+                width: '*'
+              },
+              {
+                text: reverseText(`حصر عدد المسجلين على صعيد لجماعة: ${jamaaName}`.split(' ').join('         ')),
+                style: 'subheader',
+                alignment: 'right',
+                width: 'auto',
+                margin: [0, 0, 20, 0]
+              }
+            ],
+            margin: [0, 30, 0, 30],
+            direction: 'rtl'
+          },
+          {
+            text: reverseText(`أي: ${totalVotersInWords.split(' ').join('         ')} ناخبا`.split(' ').join('         ')),
+            style: 'subheader',
+            alignment: 'center',
+            margin: [0, 30, 0, 30]
+          },
+          {
+            text: reverseText(`وحرر ب ${place} في: ${customDate}`.split(' ').join('         ')),
+            style: 'subheader',
+            alignment: 'center',
+            margin: [0, 30, 0, 80]
+          },
+          {
+            text: reverseText('رئيس اللجنة الإدارية'.split(' ').join('         ')),
+            style: 'signatureUnderlinedCentered',
+            alignment: 'center',
+            margin: [0, 80, 0, 0]
+          }
+        ],
+        alignment: 'right',
+        direction: 'rtl',
+        margin: [40, 40, 40, 40]
+      });
+    }
+  }
 
   return {
     content,
     styles: {
       header: { fontSize: 18, bold: true, font: 'Amiri', margin: [0, 0, 0, 10] },
+      headerRight: { fontSize: 14, bold: true, font: 'Amiri', decoration: 'underline' },
       subheader: { fontSize: 14, bold: true, font: 'Amiri', margin: [0, 5, 0, 5] },
-      title: { fontSize: 16, bold: true, font: 'Amiri', margin: [0, 10, 0, 10], color: 'rgb(90, 147, 252)' },
+      subheaderRight: { fontSize: 12, bold: true, font: 'Amiri' },
+      mainTitle: { fontSize: 16, bold: true, font: 'Amiri' },
+      headerRightUnderlined: { fontSize: 14, bold: true, font: 'Amiri', decoration: 'underline' },
+      subheaderRightUnderlined: { fontSize: 14, bold: true, font: 'Amiri', decoration: 'underline', alignment: 'right' },
+      mainTitleUnderlined: { fontSize: 16, bold: true, font: 'Amiri', decoration: 'underline' },
+      subheaderUnderlinedRight: { fontSize: 14, bold: true, font: 'Amiri', decoration: 'underline', alignment: 'right' },
+      subheaderUnderlined: { fontSize: 14, bold: true, font: 'Amiri', decoration: 'underline' },
+      subheaderPage4Jamaa: { fontSize: 14, bold: true, font: 'Amiri', margin: [0, 0, 0, 10] },
+      titleUnderlined: { fontSize: 16, bold: true, font: 'Amiri', margin: [0, 10, 0, 10], color: 'rgb(90, 147, 252)', decoration: 'underline' },
+      titleNoUnderline: { fontSize: 16, bold: true, font: 'Amiri', margin: [0, 10, 0, 10], color: 'rgb(90, 147, 252)' },
+      tableHeader: { bold: true, color: 'black', alignment: 'right', font: 'Amiri', margin: [0, 0, 5, 0] },
       table: { fontSize: 12, font: 'Amiri', margin: [0, 10, 0, 10] },
-      tableHeader: { bold: true, color: 'black', alignment: 'right', font: 'Amiri' },
-      signature: { fontSize: 12, bold: true, font: 'Amiri', margin: [0, 20, 0, 0] },
+      signatureUnderlinedCentered: { fontSize: 12, bold: true, font: 'Amiri', margin: [0, 20, 0, 0], decoration: 'underline', alignment: 'center' },
+      pageNumber: { fontSize: 10, font: 'Amiri', alignment: 'left' }
     },
-    defaultStyle: { font: 'Amiri', alignment: 'right' },
+    defaultStyle: { font: 'Amiri', alignment: 'right', direction: 'rtl' },
     pageMargins: [40, 40, 40, 40],
   };
 };
@@ -242,28 +581,44 @@ const GeneralElections = ({ data }) => {
     }
 
     try {
-      // جمع بيانات الدوائر
       let dairaData = [];
       (data || []).forEach((wilaya) => {
         (wilaya.jamaat || []).forEach((jamaa) => {
           if (jamaa.name === selectedJamaa) {
             (jamaa.dawair || []).forEach((daira) => {
-              let dairaVoters = [];
-              (daira.makatib || []).forEach((maktab) => {
-                if (!selectedMaktab || standardizeMaktabName(maktab.name) === standardizeMaktabName(selectedMaktab)) {
-                  dairaVoters = [...dairaVoters, ...(maktab.voters || [])];
+              if (!selectedDaira || daira.name === selectedDaira) {
+                let dairaVoters = [];
+                if (selectedMaktab) {
+                  (daira.makatib || []).forEach((maktab) => {
+                    if (standardizeMaktabName(maktab.name) === standardizeMaktabName(selectedMaktab)) {
+                      dairaVoters = [...(maktab.voters || [])];
+                    }
+                  });
+                  if (dairaVoters.length > 0) {
+                    dairaVoters.sort((a, b) =>
+                      (a.serialNumber && /^\d+$/.test(String(a.serialNumber)) ? String(a.serialNumber) : '0').localeCompare(
+                        b.serialNumber && /^\d+$/.test(String(b.serialNumber)) ? String(b.serialNumber) : '0',
+                        undefined,
+                        { numeric: true }
+                      )
+                    );
+                    dairaData.push({ dairaName: daira.name, voters: dairaVoters });
+                  }
+                } else {
+                  (daira.makatib || []).forEach((maktab) => {
+                    dairaVoters = [...dairaVoters, ...(maktab.voters || [])];
+                  });
+                  if (dairaVoters.length > 0) {
+                    dairaVoters.sort((a, b) =>
+                      (a.serialNumber && /^\d+$/.test(String(a.serialNumber)) ? String(a.serialNumber) : '0').localeCompare(
+                        b.serialNumber && /^\d+$/.test(String(b.serialNumber)) ? String(b.serialNumber) : '0',
+                        undefined,
+                        { numeric: true }
+                      )
+                    );
+                    dairaData.push({ dairaName: daira.name, voters: dairaVoters });
+                  }
                 }
-              });
-              // نضيف الدائرة فقط إذا كانت تحتوي على ناخبين
-              if (dairaVoters.length > 0) {
-                dairaVoters.sort((a, b) =>
-                  (a.serialNumber && /^\d+$/.test(a.serialNumber) ? a.serialNumber : '0').localeCompare(
-                    b.serialNumber && /^\d+$/.test(b.serialNumber) ? b.serialNumber : '0',
-                    undefined,
-                    { numeric: true }
-                  )
-                );
-                dairaData.push({ dairaName: daira.name, voters: dairaVoters });
               }
             });
           }
@@ -271,14 +626,19 @@ const GeneralElections = ({ data }) => {
       });
 
       if (dairaData.length === 0) {
-        message.error('لا توجد بيانات ناخبين لهذه الجماعة!');
+        message.error('لا توجد بيانات ناخبين لهذه الجماعة أو الدائرة أو مكتب التصويت المختار!');
         return;
       }
 
-      // ترتيب الدوائر حسب الاسم
-      dairaData.sort((a, b) => a.dairaName.localeCompare(b.dairaName, undefined, { numeric: true }));
+      dairaData.sort((a, b) => {
+        const nameA = String(a.dairaName).replace(/\D/g, '');
+        const nameB = String(b.dairaName).replace(/\D/g, '');
+        return parseInt(nameA) - parseInt(nameB);
+      });
 
-      pdfMake.createPdf(getDocumentDefinition(selectedJamaa, dairaData, selectedDate)).download(`general_elections_${selectedJamaa}.pdf`);
+      pdfMake.createPdf(getDocumentDefinition(selectedJamaa, dairaData, selectedDate, selectedDaira, selectedMaktab)).download(
+        `general_elections_${selectedJamaa}${selectedDaira ? '_Daira_' + selectedDaira : ''}${selectedMaktab ? '_Maktab_' + getMaktabNumber(selectedMaktab) : ''}.pdf`
+      );
       message.success('تم تنزيل ملف PDF بنجاح!');
     } catch (error) {
       console.error('Error generating PDF:', error);

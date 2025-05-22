@@ -5,7 +5,14 @@ import pdfMake from 'pdfmake/build/pdfmake';
 import { amiriFontVFS } from './amiri-font';
 
 pdfMake.vfs = amiriFontVFS;
-pdfMake.fonts = { Amiri: { normal: 'Amiri-Regular.ttf', bold: 'Amiri-Regular.ttf', italics: 'Amiri-Regular.ttf', bolditalics: 'Amiri-Regular.ttf' } };
+pdfMake.fonts = { 
+    Amiri: { 
+        normal: 'Amiri-Regular.ttf', 
+        bold: 'Amiri-Regular.ttf', 
+        italics: 'Amiri-Regular.ttf', 
+        bolditalics: 'Amiri-Regular.ttf' 
+    } 
+};
 
 const { Title } = Typography;
 const { Option } = Select;
@@ -15,7 +22,7 @@ const normalizeValue = (value) => !value ? '' : String(value).trim().replace(/\s
 const standardizeMaktabName = (name) => !name ? 'غير معروف' : /^\d+$/.test(String(name).trim()) ? `مكتب ${name}` : name;
 const reverseText = (text) => {
     if (!text) return text;
-    let reversed = text.split(' ').reverse().join(' ').replace(/\)ة\(/g, '(ة)').replace(/\)(.*?)\(/g, '($1)');
+    let reversed = text.split(' ').reverse().join(' ').replace(/\((.*?)\)/g, ') $1 (').replace(/\)ة\(/g, ')ة(');
     return reversed;
 };
 const formatCurrentDateTime = () => {
@@ -23,61 +30,95 @@ const formatCurrentDateTime = () => {
     return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')} من ${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
 };
 
-// دالة getDocumentDefinition المعدلة
 const getDocumentDefinition = (voter, jamaaName = 'غير متوفر', maktabName = 'غير متوفر') => ({
     content: [
         {
             stack: [
-                { text: reverseText('المملكة المغربية'), style: 'header' },
-                { text: reverseText('وزارة الداخلية'), style: 'header' },
-                { text: reverseText('إقليم الرحامنة'), style: 'header' },
+                { text: reverseText('المملكة المغربية'), style: 'header', margin: [0, 0, 0, 2] },
+                { text: reverseText('وزارة الداخلية'), style: 'header', margin: [0, 0, 0, 2] },
+                { text: reverseText('إقليم الرحامنة'), style: 'header', margin: [0, 0, 0, 2] },
             ],
             alignment: 'right',
-            margin: [0, 0, 40, 15],
+            margin: [0, 0, 20, 10],
         },
         { text: reverseText('الانتخابات الجماعية'), style: 'title', alignment: 'center', color: 'rgb(90, 147, 252)' },
         { text: reverseText('إشعار بمكان التصويت'), style: 'titleSecondary', alignment: 'center', color: 'rgb(90, 147, 252)' },
-        // المعلومات
         {
-            stack: [
-                { text: reverseText(`الاسم الشخصي والعائلي للناخب)ة(: ${voter.firstName} ${voter.lastName}`), style: 'info', alignment: 'right' },
-                { text: reverseText(`العنوان: ${voter.address || 'غير متوفر'}`), style: 'info', alignment: 'right' },
-                { text: reverseText(`جماعة: ${jamaaName}`), style: 'info', alignment: 'right' },
-                { text: reverseText(`رقم البطاقة الوطنية للتعريف: ${voter.cin || 'غير متوفر'}`), style: 'info', alignment: 'right' },
-                { text: reverseText(`عنوان مكتب التصويت: ${voter.maktabAddress || 'غير متوفر'}`), style: 'info', alignment: 'right' },
-                { text: reverseText(`رقم مكتب التصويت: ${maktabName}`), style: 'info', alignment: 'right' },
-                { text: reverseText(`الرقم الترتيبي في لائحة الناخبين: ${voter.serialNumber || 'غير متوفر'}`), style: 'info', alignment: 'right' },
-                { text: reverseText(`تاريخ وساعة الاقتراع: ${formatCurrentDateTime()}`), style: 'info', alignment: 'right' },
-            ],
-            margin: [0, 10, 40, 15],
+            table: {
+                widths: [300, 10, 200],
+                body: [
+                    [
+                        { text: reverseText(`${voter.firstName} ${voter.lastName}`), style: 'infoValue', alignment: 'right' },
+                        { text: ':', style: 'infoColon', alignment: 'center' },
+                        { text: reverseText('الاسم الشخصي والعائلي للناخب)ة('), style: 'infoLabel', alignment: 'right' },
+                    ],
+                    [
+                        { text: reverseText(voter.address || 'غير متوفر'), style: 'infoValue', alignment: 'right' },
+                        { text: ':', style: 'infoColon', alignment: 'center' },
+                        { text: reverseText('العنوان'), style: 'infoLabel', alignment: 'right' },
+                    ],
+                    [
+                        { text: reverseText(jamaaName), style: 'infoValue', alignment: 'right' },
+                        { text: ':', style: 'infoColon', alignment: 'center' },
+                        { text: reverseText('جماعة'), style: 'infoLabel', alignment: 'right' },
+                    ],
+                    [
+                        { text: reverseText(voter.cin || 'غير متوفر'), style: 'infoValue', alignment: 'right' },
+                        { text: ':', style: 'infoColon', alignment: 'center' },
+                        { text: reverseText('رقم البطاقة الوطنية للتعريف'), style: 'infoLabel', alignment: 'right' },
+                    ],
+                    [
+                        { text: reverseText(voter.maktabAddress || 'غير متوفر'), style: 'infoValue', alignment: 'right' },
+                        { text: ':', style: 'infoColon', alignment: 'center' },
+                        { text: reverseText('عنوان مكتب التصويت'), style: 'infoLabel', alignment: 'right' },
+                    ],
+                    [
+                        { text: reverseText(maktabName), style: 'infoValue', alignment: 'right' },
+                        { text: ':', style: 'infoColon', alignment: 'center' },
+                        { text: reverseText('رقم مكتب التصويت'), style: 'infoLabel', alignment: 'right' },
+                    ],
+                    [
+                        { text: reverseText(voter.serialNumber || 'غير متوفر'), style: 'infoValue', alignment: 'right' },
+                        { text: ':', style: 'infoColon', alignment: 'center' },
+                        { text: reverseText('الرقم الترتيبي في لائحة الناخبين'), style: 'infoLabel', alignment: 'right' },
+                    ],
+                    [
+                        { text: reverseText(formatCurrentDateTime()), style: 'infoValue', alignment: 'right' },
+                        { text: ':', style: 'infoColon', alignment: 'center' },
+                        { text: reverseText('تاريخ وساعة الاقتراع'), style: 'infoLabel', alignment: 'right' },
+                    ],
+                ],
+            },
+            layout: 'noBorders',
+            margin: [0, 15, 20, 15],
         },
         {
-            text: reverseText('ملحوظة: لا يعتبر هذا الإشعار ضروريا للتصويت. ويتعين على الناخب الإدلاء بالبطاقة الوطنية للتعريف عند التصويت.'),
+            text: reverseText('ملحوظة: لا يعتبر هذا الإشعار ضروريا للتصويت. ويتعين على الناخب)ة( الإدلاء بالبطاقة الوطنية للتعريف عند التصويت.'),
             style: 'note',
             color: 'black',
             alignment: 'right',
-            margin: [0, 15, 40, 15],
+            margin: [0, 20, 20, 10],
         },
         {
             stack: [
-                { text: reverseText('طابع'), style: 'footerStamp' },
-                { text: reverseText('السلطة الإدارية المحلية'), style: 'footer' },
+                { text: reverseText('طابع'), style: 'footer', alignment: 'left', margin: [50, 0, 0, 5] },
+                { text: reverseText('السلطة الإدارية المحلية'), style: 'footer', alignment: 'left', margin: [10, 0, 0, 5] },
             ],
-            alignment: 'left', // محاذاة إلى اليسار
-            margin: [40, 15, 0, 0],
+            absolutePosition: { x: 30, y: 720 },
         },
     ],
     styles: {
-        header: { fontSize: 13, bold: true, color: '#1a1a1a', margin: [0, 0, 0, 3], font: 'Amiri' },
-        title: { fontSize: 16, bold: true, margin: [0, 10, 0, 5], font: 'Amiri' },
-        titleSecondary: { fontSize: 16, bold: true, margin: [0, 5, 0, 10], font: 'Amiri' },
-        info: { fontSize: 13, margin: [0, 8, 0, 8], font: 'Amiri' },
-        note: { fontSize: 10, font: 'Amiri' },
-        footer: { fontSize: 12, bold: true, font: 'Amiri' },
-        footerStamp: { fontSize: 12, bold: true, font: 'Amiri', margin: [0, 0, 0, 3] },
+        header: { fontSize: 16, bold: true, color: '#1a1a1a', margin: [0, 0, 0, 0], font: 'Amiri', lineHeight: 1 },
+        title: { fontSize: 20, bold: true, margin: [0, 10, 0, 5], font: 'Amiri', color: 'rgb(90, 147, 252)' },
+        titleSecondary: { fontSize: 18, bold: true, margin: [0, 5, 0, 10], font: 'Amiri', color: 'rgb(90, 147, 252)' },
+        infoLabel: { fontSize: 14, bold: true, font: 'Amiri', lineHeight: 1.5, color: '#000000' },
+        infoValue: { fontSize: 14, bold: false, font: 'Amiri', lineHeight: 1.5, color: '#000000' },
+        infoColon: { fontSize: 14, bold: true, font: 'Amiri', lineHeight: 1.5, color: '#000000' },
+        note: { fontSize: 12, bold: true, font: 'Amiri', lineHeight: 1.2 },
+        footer: { fontSize: 14, bold: true, font: 'Amiri', lineHeight: 1.2, color: '#000000' },
     },
-    defaultStyle: { font: 'Amiri', alignment: 'right' },
-    pageMargins: [50, 50, 50, 50],
+    defaultStyle: { font: 'Amiri', alignment: 'right', bold: true },
+    pageMargins: [30, 30, 30, 30],
 });
 
 const VotersFilter = ({ data, setData, cancelledVoters, setCancelledVoters }) => {
@@ -276,8 +317,8 @@ const VotersFilter = ({ data, setData, cancelledVoters, setCancelledVoters }) =>
             pdfMake.createPdf({
                 content,
                 styles: getDocumentDefinition({}).styles,
-                defaultStyle: { font: 'Amiri', alignment: 'right' },
-                pageMargins: [50, 50, 50, 50]
+                defaultStyle: { font: 'Amiri', alignment: 'right', bold: true },
+                pageMargins: [30, 30, 30, 30]
             }).download('all_voters_voting_notices.pdf');
             message.success({ content: 'تمت عملية التنزيل بنجاح', key: 'pdfGeneration' });
         } catch (error) {
@@ -293,7 +334,7 @@ const VotersFilter = ({ data, setData, cancelledVoters, setCancelledVoters }) =>
         { title: 'العنوان بدقة', dataIndex: 'address', key: 'address' },
         { title: 'الجنس', dataIndex: 'gender', key: 'gender' },
         { title: 'تاريخ الازدياد', dataIndex: 'birthDate', key: 'birthDate' },
-        { title: 'إجراء', key: 'action', render: (_, record) => <StyledButton type="primary" onClick={() => generatePDF(record)} aria-label="تحميل إشعار التصويت للناخب">تحميل PDF</StyledButton> },
+        { title: 'إجراء', key: 'action', render: (_, record) => <StyledButton type="primary" onClick={() => generatePDF(record)} aria-label="تحميل إشعار التصويت للناخب)ة(">تحميل PDF</StyledButton> },
     ];
 
     const cancelledColumns = [
@@ -305,7 +346,7 @@ const VotersFilter = ({ data, setData, cancelledVoters, setCancelledVoters }) =>
         { title: 'الجنس', dataIndex: 'gender', key: 'gender' },
         { title: 'تاريخ الازدياد', dataIndex: 'birthDate', key: 'birthDate' },
         { title: 'الحالة', dataIndex: 'status', key: 'status' },
-        { title: 'إجراء', key: 'action', render: (_, record) => <StyledButton type="primary" onClick={() => handleRestore(record)} aria-label="استرجاع الناخب المشطوب">استرجاع</StyledButton> },
+        { title: 'إجراء', key: 'action', render: (_, record) => <StyledButton type="primary" onClick={() => handleRestore(record)} aria-label="استرجاع الناخب)ة( المشطوب">استرجاع</StyledButton> },
     ];
 
     const cancelledTableData = (cancelledVoters || [])
@@ -316,7 +357,7 @@ const VotersFilter = ({ data, setData, cancelledVoters, setCancelledVoters }) =>
 
     useEffect(() => {
         if (searchCancelledCIN && cancelledTableData.length === 0) {
-            message.error('لا يوجد هذا الناخب.');
+            message.error('لا يوجد هذا الناخب');
         }
     }, [searchCancelledCIN, cancelledTableData]);
 
@@ -334,7 +375,7 @@ const VotersFilter = ({ data, setData, cancelledVoters, setCancelledVoters }) =>
                             style={{ width: 300 }}
                             enterButton="بحث"
                             allowClear
-                            aria-label="البحث عن ناخب برقم البطاقة الوطنية"
+                            aria-label="البحث عن الناخب برقم البطاقة الوطنية"
                         />
                     </SearchSection>
                     <FilterSection>
@@ -381,7 +422,7 @@ const VotersFilter = ({ data, setData, cancelledVoters, setCancelledVoters }) =>
                                 style={{ width: 300 }}
                                 enterButton="بحث"
                                 allowClear
-                                aria-label="البحث عن ناخب مشطوب برقم البطاقة الوطنية"
+                                aria-label="البحث عن الناخب مشطوب برقم البطاقة الوطنية"
                             />
                         </SearchSection>
                         <StyledTable
@@ -439,7 +480,7 @@ const FilterSection = styled.div`
     display: flex;
     gap: 16px;
     flex-wrap: wrap;
-    .ant-select { min-width: 200px; transition: all 0.3s ease; &:hover { box-shadow: 0 0 0 2px rgba(90, 147, 252, 0.1); } }
+   לא .ant-select { min-width: 200px; transition: all 0.3s ease; &:hover { box-shadow: 0 0 0 2px rgba(90, 147, 252, 0.1); } }
 `;
 
 const ButtonSection = styled.div`
