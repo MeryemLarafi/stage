@@ -2,11 +2,11 @@ import React, { useState } from 'react';
 import { Select, Button, message, Typography, DatePicker } from 'antd';
 import styled from 'styled-components';
 import pdfMake from 'pdfmake/build/pdfmake';
-import { amiriFontVFS } from './amiri-font';
+import { scheherazadeFontVFS } from './scheherazade-font'; 
 import moment from 'moment';
 
-pdfMake.vfs = amiriFontVFS;
-pdfMake.fonts = { Amiri: { normal: 'Amiri-Regular.ttf', bold: 'Amiri-Regular.ttf', italics: 'Amiri-Regular.ttf', bolditalics: 'Amiri-Regular.ttf' } };
+pdfMake.vfs = scheherazadeFontVFS;
+pdfMake.fonts = { Scheherazade: { normal: 'Scheherazade-Regular.ttf', bold: 'Scheherazade-Regular.ttf', italics: 'Scheherazade-Regular.ttf', bolditalics: 'Scheherazade-Regular.ttf' } };
 
 moment.defineLocale('ar', {
   months: 'يناير_فبراير_مارس_أبريل_مايو_يونيو_يوليو_أغسطس_سبتمبر_أكتوبر_نوفمبر_ديسمبر'.split('_'),
@@ -541,25 +541,25 @@ const getDocumentDefinition = (jamaaName, dairaData, selectedDate, selectedDaira
   return {
     content,
     styles: {
-      header: { fontSize: 18, bold: true, font: 'Amiri', margin: [0, 0, 0, 10] },
-      headerRight: { fontSize: 14, bold: true, font: 'Amiri', decoration: 'underline' },
-      subheader: { fontSize: 14, bold: true, font: 'Amiri', margin: [0, 5, 0, 5] },
-      subheaderRight: { fontSize: 12, bold: true, font: 'Amiri' },
-      mainTitle: { fontSize: 16, bold: true, font: 'Amiri' },
-      headerRightUnderlined: { fontSize: 14, bold: true, font: 'Amiri', decoration: 'underline' },
-      subheaderRightUnderlined: { fontSize: 14, bold: true, font: 'Amiri', decoration: 'underline', alignment: 'right' },
-      mainTitleUnderlined: { fontSize: 16, bold: true, font: 'Amiri', decoration: 'underline' },
-      subheaderUnderlinedRight: { fontSize: 14, bold: true, font: 'Amiri', decoration: 'underline', alignment: 'right' },
-      subheaderUnderlined: { fontSize: 14, bold: true, font: 'Amiri', decoration: 'underline' },
-      subheaderPage4Jamaa: { fontSize: 14, bold: true, font: 'Amiri', margin: [0, 0, 0, 10] },
-      titleUnderlined: { fontSize: 16, bold: true, font: 'Amiri', margin: [0, 10, 0, 10], color: 'rgb(90, 147, 252)', decoration: 'underline' },
-      titleNoUnderline: { fontSize: 16, bold: true, font: 'Amiri', margin: [0, 10, 0, 10], color: 'rgb(90, 147, 252)' },
-      tableHeader: { bold: true, color: 'black', alignment: 'right', font: 'Amiri', margin: [0, 0, 5, 0] },
-      table: { fontSize: 12, font: 'Amiri', margin: [0, 10, 0, 10] },
-      signatureUnderlinedCentered: { fontSize: 12, bold: true, font: 'Amiri', margin: [0, 20, 0, 0], decoration: 'underline', alignment: 'center' },
-      pageNumber: { fontSize: 10, font: 'Amiri', alignment: 'left' }
+      header: { fontSize: 18, bold: true, font: 'Scheherazade', margin: [0, 0, 0, 10] },
+      headerRight: { fontSize: 14, bold: true, font: 'Scheherazade', decoration: 'underline' },
+      subheader: { fontSize: 14, bold: true, font: 'Scheherazade', margin: [0, 5, 0, 5] },
+      subheaderRight: { fontSize: 12, bold: true, font: 'Scheherazade' },
+      mainTitle: { fontSize: 16, bold: true, font: 'Scheherazade' },
+      headerRightUnderlined: { fontSize: 14, bold: true, font: 'Scheherazade', decoration: 'underline' },
+      subheaderRightUnderlined: { fontSize: 14, bold: true, font: 'Scheherazade', decoration: 'underline', alignment: 'right' },
+      mainTitleUnderlined: { fontSize: 16, bold: true, font: 'Scheherazade', decoration: 'underline' },
+      subheaderUnderlinedRight: { fontSize: 14, bold: true, font: 'Scheherazade', decoration: 'underline', alignment: 'right' },
+      subheaderUnderlined: { fontSize: 14, bold: true, font: 'Scheherazade', decoration: 'underline' },
+      subheaderPage4Jamaa: { fontSize: 14, bold: true, font: 'Scheherazade', margin: [0, 0, 0, 10] },
+      titleUnderlined: { fontSize: 16, bold: true, font: 'Scheherazade', margin: [0, 10, 0, 10], color: 'rgb(90, 147, 252)', decoration: 'underline' },
+      titleNoUnderline: { fontSize: 16, bold: true, font: 'Scheherazade', margin: [0, 10, 0, 10], color: 'rgb(90, 147, 252)' },
+      tableHeader: { bold: true, color: 'black', alignment: 'right', font: 'Scheherazade', margin: [0, 0, 5, 0] },
+      table: { fontSize: 12, font: 'Scheherazade', margin: [0, 10, 0, 10] },
+      signatureUnderlinedCentered: { fontSize: 12, bold: true, font: 'Scheherazade', margin: [0, 20, 0, 0], decoration: 'underline', alignment: 'center' },
+      pageNumber: { fontSize: 10, font: 'Scheherazade', alignment: 'left' }
     },
-    defaultStyle: { font: 'Amiri', alignment: 'right', direction: 'rtl' },
+    defaultStyle: { font: 'Scheherazade', alignment: 'right', direction: 'rtl' },
     pageMargins: [40, 40, 40, 40],
   };
 };

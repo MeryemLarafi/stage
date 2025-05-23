@@ -2,17 +2,10 @@ import React, { useState, useEffect } from 'react';
 import { Table, Select, Typography, Button, Modal, message, Input } from 'antd';
 import styled from 'styled-components';
 import pdfMake from 'pdfmake/build/pdfmake';
-import { amiriFontVFS } from './amiri-font';
+import { ArabswellFontVFS } from './Arabswell'; // تأكدي من المسار
 
-pdfMake.vfs = amiriFontVFS;
-pdfMake.fonts = { 
-    Amiri: { 
-        normal: 'Amiri-Regular.ttf', 
-        bold: 'Amiri-Regular.ttf', 
-        italics: 'Amiri-Regular.ttf', 
-        bolditalics: 'Amiri-Regular.ttf' 
-    } 
-};
+// التحقق من الـ VFS
+console.log('VFS:', ArabswellFontVFS);
 
 const { Title } = Typography;
 const { Option } = Select;
@@ -22,12 +15,24 @@ const normalizeValue = (value) => !value ? '' : String(value).trim().replace(/\s
 const standardizeMaktabName = (name) => !name ? 'غير معروف' : /^\d+$/.test(String(name).trim()) ? `مكتب ${name}` : name;
 const reverseText = (text) => {
     if (!text) return text;
-    let reversed = text.split(' ').reverse().join(' ').replace(/\((.*?)\)/g, ') $1 (').replace(/\)ة\(/g, ')ة(');
-    return reversed;
+    return text.split(' ').reverse().join(' ').replace(/\((.*?)\)/g, ') $1 (').replace(/\)ة\(/g, ')ة(');
 };
 const formatCurrentDateTime = () => {
     const now = new Date();
     return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')} من ${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
+};
+
+// دالة لإعداد الـ vfs و fonts
+const configurePdfMake = () => {
+    pdfMake.vfs = ArabswellFontVFS;
+    pdfMake.fonts = {
+        Arabswell: {
+            normal: 'Arabswell.ttf',
+            bold: 'Arabswell.ttf',
+            italics: 'Arabswell.ttf',
+            bolditalics: 'Arabswell.ttf'
+        }
+    };
 };
 
 const getDocumentDefinition = (voter, jamaaName = 'غير متوفر', maktabName = 'غير متوفر') => ({
@@ -39,85 +44,104 @@ const getDocumentDefinition = (voter, jamaaName = 'غير متوفر', maktabNam
                 { text: reverseText('إقليم الرحامنة'), style: 'header', margin: [0, 0, 0, 2] },
             ],
             alignment: 'right',
-            margin: [0, 0, 20, 10],
+            margin: [0, 0, 20, 30],
         },
         { text: reverseText('الانتخابات الجماعية'), style: 'title', alignment: 'center', color: 'rgb(90, 147, 252)' },
         { text: reverseText('إشعار بمكان التصويت'), style: 'titleSecondary', alignment: 'center', color: 'rgb(90, 147, 252)' },
         {
             table: {
-                widths: [300, 10, 200],
+                widths: [280, 30, 180],
                 body: [
                     [
                         { text: reverseText(`${voter.firstName} ${voter.lastName}`), style: 'infoValue', alignment: 'right' },
-                        { text: ':', style: 'infoColon', alignment: 'center' },
+                        { text: ':', style: 'infoColon', alignment: 'right' },
                         { text: reverseText('الاسم الشخصي والعائلي للناخب)ة('), style: 'infoLabel', alignment: 'right' },
                     ],
                     [
                         { text: reverseText(voter.address || 'غير متوفر'), style: 'infoValue', alignment: 'right' },
-                        { text: ':', style: 'infoColon', alignment: 'center' },
+                        { text: ':', style: 'infoColon', alignment: 'right' },
                         { text: reverseText('العنوان'), style: 'infoLabel', alignment: 'right' },
                     ],
                     [
                         { text: reverseText(jamaaName), style: 'infoValue', alignment: 'right' },
-                        { text: ':', style: 'infoColon', alignment: 'center' },
+                        { text: ':', style: 'infoColon', alignment: 'right' },
                         { text: reverseText('جماعة'), style: 'infoLabel', alignment: 'right' },
                     ],
                     [
                         { text: reverseText(voter.cin || 'غير متوفر'), style: 'infoValue', alignment: 'right' },
-                        { text: ':', style: 'infoColon', alignment: 'center' },
+                        { text: ':', style: 'infoColon', alignment: 'right' },
                         { text: reverseText('رقم البطاقة الوطنية للتعريف'), style: 'infoLabel', alignment: 'right' },
                     ],
                     [
                         { text: reverseText(voter.maktabAddress || 'غير متوفر'), style: 'infoValue', alignment: 'right' },
-                        { text: ':', style: 'infoColon', alignment: 'center' },
+                        { text: ':', style: 'infoColon', alignment: 'right' },
                         { text: reverseText('عنوان مكتب التصويت'), style: 'infoLabel', alignment: 'right' },
                     ],
                     [
                         { text: reverseText(maktabName), style: 'infoValue', alignment: 'right' },
-                        { text: ':', style: 'infoColon', alignment: 'center' },
+                        { text: ':', style: 'infoColon', alignment: 'right' },
                         { text: reverseText('رقم مكتب التصويت'), style: 'infoLabel', alignment: 'right' },
                     ],
                     [
                         { text: reverseText(voter.serialNumber || 'غير متوفر'), style: 'infoValue', alignment: 'right' },
-                        { text: ':', style: 'infoColon', alignment: 'center' },
+                        { text: ':', style: 'infoColon', alignment: 'right' },
                         { text: reverseText('الرقم الترتيبي في لائحة الناخبين'), style: 'infoLabel', alignment: 'right' },
                     ],
                     [
                         { text: reverseText(formatCurrentDateTime()), style: 'infoValue', alignment: 'right' },
-                        { text: ':', style: 'infoColon', alignment: 'center' },
+                        { text: ':', style: 'infoColon', alignment: 'right' },
                         { text: reverseText('تاريخ وساعة الاقتراع'), style: 'infoLabel', alignment: 'right' },
                     ],
                 ],
             },
             layout: 'noBorders',
-            margin: [0, 15, 20, 15],
+            margin: [0, 40, 20, 15],
         },
         {
-            text: reverseText('ملحوظة: لا يعتبر هذا الإشعار ضروريا للتصويت. ويتعين على الناخب)ة( الإدلاء بالبطاقة الوطنية للتعريف عند التصويت.'),
-            style: 'note',
-            color: 'black',
+            stack: [
+                {
+                    text: reverseText('ملحوظة: لا يعتبر هذا الإشعار ضروريا للتصويت. ويتعين على الناخب)ة( الإدلاء بالبطاقة الوطنية للتعريف عند التصويت.'),
+                    style: 'note',
+                    alignment: 'right',
+                    margin: [0, 10, 20, 10],
+                    textDirection: 'rtl',
+                },
+                {
+                    canvas: [
+                        {
+                            type: 'line',
+                            x1: 505, // بداية الخط (مضبوط مع بداية كلمة "ملحوظة")
+                            y1: 0, // ملاصق تمامًا للنص
+                            x2: 405, // نهاية الخط (مضبوط مع نهاية كلمة "ملحوظة")
+                            y2: 0,
+                            lineWidth: 0.7, // سماكة أرفع لمظهر أقرب لـ underline
+                            lineColor: 'black',
+                        },
+                    ],
+                    absolutePosition: { x: 30, y: 460 }, // موقع أقرب للنص
+                },
+            ],
             alignment: 'right',
-            margin: [0, 20, 20, 10],
         },
         {
             stack: [
                 { text: reverseText('طابع'), style: 'footer', alignment: 'left', margin: [50, 0, 0, 5] },
                 { text: reverseText('السلطة الإدارية المحلية'), style: 'footer', alignment: 'left', margin: [10, 0, 0, 5] },
             ],
-            absolutePosition: { x: 30, y: 720 },
+            absolutePosition: { x: 30, y: 550 },
         },
     ],
     styles: {
-        header: { fontSize: 16, bold: true, color: '#1a1a1a', margin: [0, 0, 0, 0], font: 'Amiri', lineHeight: 1 },
-        title: { fontSize: 20, bold: true, margin: [0, 10, 0, 5], font: 'Amiri', color: 'rgb(90, 147, 252)' },
-        titleSecondary: { fontSize: 18, bold: true, margin: [0, 5, 0, 10], font: 'Amiri', color: 'rgb(90, 147, 252)' },
-        infoLabel: { fontSize: 14, bold: true, font: 'Amiri', lineHeight: 1.5, color: '#000000' },
-        infoValue: { fontSize: 14, bold: false, font: 'Amiri', lineHeight: 1.5, color: '#000000' },
-        infoColon: { fontSize: 14, bold: true, font: 'Amiri', lineHeight: 1.5, color: '#000000' },
-        note: { fontSize: 12, bold: true, font: 'Amiri', lineHeight: 1.2 },
-        footer: { fontSize: 14, bold: true, font: 'Amiri', lineHeight: 1.2, color: '#000000' },
+        header: { fontSize: 16, bold: false, color: '#1a1a1a', margin: [0, 0, 0, 0], font: 'Arabswell', lineHeight: 1 },
+        title: { fontSize: 20, bold: false, margin: [0, 10, 0, 5], font: 'Arabswell', color: 'rgb(90, 147, 252)' },
+        titleSecondary: { fontSize: 18, bold: false, margin: [0, 5, 0, 10], font: 'Arabswell', color: 'rgb(90, 147, 252)' },
+        infoLabel: { fontSize: 14, bold: false, font: 'Arabswell', lineHeight: 1.5, color: '#000000' },
+        infoValue: { fontSize: 14, bold: false, font: 'Arabswell', lineHeight: 1.5, color: '#000000' },
+        infoColon: { fontSize: 14, bold: false, font: 'Arabswell', lineHeight: 1.5, color: '#000000' },
+        note: { fontSize: 12, bold: false, font: 'Arabswell', lineHeight: 1.2 },
+        footer: { fontSize: 14, bold: false, font: 'Arabswell', lineHeight: 1.2, color: '#000000' },
     },
-    defaultStyle: { font: 'Amiri', alignment: 'right', bold: true },
+    defaultStyle: { font: 'Arabswell', alignment: 'right', bold: false, textDirection: 'rtl' },
     pageMargins: [30, 30, 30, 30],
 });
 
@@ -264,8 +288,9 @@ const VotersFilter = ({ data, setData, cancelledVoters, setCancelledVoters }) =>
     };
 
     const generatePDF = (voter) => {
-        let jamaaName = 'غير متوفر', maktabName = 'غير متوفر';
         try {
+            configurePdfMake();
+            let jamaaName = 'غير متوفر', maktabName = 'غير متوفر';
             (data || []).forEach((wilaya) => {
                 (wilaya.jamaat || []).forEach((jamaa) => {
                     (jamaa.dawair || []).forEach((daira) => {
@@ -284,6 +309,7 @@ const VotersFilter = ({ data, setData, cancelledVoters, setCancelledVoters }) =>
             });
             pdfMake.createPdf(getDocumentDefinition(voter, jamaaName, maktabName)).download(`${voter.firstName}_${voter.lastName}_voting_notice.pdf`);
         } catch (error) {
+            console.error('Error generating PDF:', error);
             message.error('خطأ في توليد PDF!');
         }
     };
@@ -292,6 +318,7 @@ const VotersFilter = ({ data, setData, cancelledVoters, setCancelledVoters }) =>
         if (!filteredVoters || filteredVoters.length === 0) return message.warning('لا توجد بيانات ناخبين لتوليد PDF!');
         message.loading({ content: 'جاري توليد PDF...', key: 'pdfGeneration', duration: 0 });
         try {
+            configurePdfMake();
             const content = filteredVoters.map((voter, index) => {
                 let jamaaName = 'غير متوفر', maktabName = 'غير متوفر';
                 (data || []).forEach((wilaya) => {
@@ -317,11 +344,12 @@ const VotersFilter = ({ data, setData, cancelledVoters, setCancelledVoters }) =>
             pdfMake.createPdf({
                 content,
                 styles: getDocumentDefinition({}).styles,
-                defaultStyle: { font: 'Amiri', alignment: 'right', bold: true },
+                defaultStyle: { font: 'Arabswell', alignment: 'right', bold: false, textDirection: 'rtl' },
                 pageMargins: [30, 30, 30, 30]
             }).download('all_voters_voting_notices.pdf');
             message.success({ content: 'تمت عملية التنزيل بنجاح', key: 'pdfGeneration' });
         } catch (error) {
+            console.error('Error generating all PDFs:', error);
             message.error({ content: 'هناك خطأ في عملية تنزيل الناخبين', key: 'pdfGeneration' });
         }
     };
@@ -480,7 +508,7 @@ const FilterSection = styled.div`
     display: flex;
     gap: 16px;
     flex-wrap: wrap;
-   לא .ant-select { min-width: 200px; transition: all 0.3s ease; &:hover { box-shadow: 0 0 0 2px rgba(90, 147, 252, 0.1); } }
+    .ant-select { min-width: 200px; transition: all 0.3s ease; &:hover { box-shadow: 0 0 0 2px rgba(90, 147, 252, 0.1); } }
 `;
 
 const ButtonSection = styled.div`
