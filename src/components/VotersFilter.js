@@ -2,9 +2,9 @@ import React, { useState, useEffect } from 'react';
 import { Table, Select, Typography, Button, Modal, message, Input } from 'antd';
 import styled from 'styled-components';
 import pdfMake from 'pdfmake/build/pdfmake';
-import { ArabswellFontVFS } from './Arabswell'; // تأكدي من المسار
+import { ArabswellFontVFS } from './Arabswell'; 
 
-// التحقق من الـ VFS
+
 console.log('VFS:', ArabswellFontVFS);
 
 const { Title } = Typography;
@@ -22,7 +22,6 @@ const formatCurrentDateTime = () => {
     return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')} من ${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
 };
 
-// دالة لإعداد الـ vfs و fonts
 const configurePdfMake = () => {
     pdfMake.vfs = ArabswellFontVFS;
     pdfMake.fonts = {
@@ -110,15 +109,15 @@ const getDocumentDefinition = (voter, jamaaName = 'غير متوفر', maktabNam
                     canvas: [
                         {
                             type: 'line',
-                            x1: 505, // بداية الخط (مضبوط مع بداية كلمة "ملحوظة")
-                            y1: 0, // ملاصق تمامًا للنص
-                            x2: 405, // نهاية الخط (مضبوط مع نهاية كلمة "ملحوظة")
+                            x1: 0,
+                            y1: 0, 
+                            x2: 0, 
                             y2: 0,
-                            lineWidth: 0.7, // سماكة أرفع لمظهر أقرب لـ underline
+                            lineWidth: 0.7, 
                             lineColor: 'black',
                         },
                     ],
-                    absolutePosition: { x: 30, y: 460 }, // موقع أقرب للنص
+                    absolutePosition: { x: 30, y: 460 }, 
                 },
             ],
             alignment: 'right',

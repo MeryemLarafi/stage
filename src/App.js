@@ -49,7 +49,6 @@ const validateVoter = (voter, existingVoters) => {
   return null;
 };
 
-// مكون لحماية الصفحات
 const ProtectedRoute = ({ children }) => {
   const { isAuthenticated } = useContext(AuthContext);
   return isAuthenticated ? children : <Navigate to="/login" />;

@@ -5,10 +5,9 @@ import pdfMake from 'pdfmake/build/pdfmake';
 import { scheherazadeFontVFS } from './scheherazade-font';
 import moment from 'moment';
 
-// التحقق من الـ VFS
+
 console.log('Scheherazade VFS:', scheherazadeFontVFS);
 
-// دالة لإعداد الـ vfs و fonts
 const configurePdfMake = () => {
     pdfMake.vfs = scheherazadeFontVFS;
     pdfMake.fonts = {
@@ -24,13 +23,11 @@ const configurePdfMake = () => {
 const { Title, Text } = Typography;
 const { Option } = Select;
 
-// Function to reverse Arabic text word order with Thin Space
 const reverseArabicText = (text) => {
     if (!text) return text;
     return text.split(' ').reverse().join('\u2009');
 };
 
-// Function to validate table data consistency
 const validateTableData = (uiData, pdfData) => {
     if (uiData.length !== pdfData.length) {
         message.error('عدد الصفوف في الجدولين غير متطابق!');
@@ -157,7 +154,6 @@ const Certificate = ({ data }) => {
             content: [
                 {
                     stack: [
-                        // Header Section
                         {
                             stack: [
                                 { text: reverseArabicText('المملكة المغربية'), style: 'header' },
@@ -169,7 +165,6 @@ const Certificate = ({ data }) => {
                             alignment: 'right',
                             margin: [0, 10, 10, 10]
                         },
-                        // Title Section
                         {
                             stack: [
                                 { text: reverseArabicText('إشهاد'), style: 'title', alignment: 'center' },
@@ -189,13 +184,12 @@ const Certificate = ({ data }) => {
                                     margin: [0, 0, 0, 10]
                                 }
                             ],
-                            margin: [0, 10, 0, 10] // فراغ صغير فوق وتحت العنوان
+                            margin: [0, 10, 0, 10]
                         },
-                        // Body Text Section
                         {
                             columns: [
                                 {
-                                    width: 480, // عرض ثابت متطابق مع الجدول
+                                    width: 480, 
                                     stack: [
                                         {
                                             text: reverseArabicText(
@@ -220,21 +214,19 @@ const Certificate = ({ data }) => {
                                             style: 'body'
                                         }
                                     ],
-                                    alignment: 'right', // النص يبدا من أقصى اليمين
-                                    margin: [10, 5, 10, 5], // فراغ صغير للنص
-                                    unbreakable: true // النصوص ما تتفرقش
+                                    alignment: 'right', 
+                                    margin: [10, 5, 10, 5],
+                                    unbreakable: true 
                                 }
                             ]
                         },
-                        // Jamaa Title
                         {
                             text: reverseArabicText(`جماعة ${selectedJamaa}`),
                             style: 'jamaaTitle',
                             alignment: 'center',
                             margin: [10, 10, 10, 5],
-                            width: 480 // نفس عرض النصوص والجدول
+                            width: 480 
                         },
-                        // Table
                         {
                             table: {
                                 headerRows: 2,
@@ -255,10 +247,9 @@ const Certificate = ({ data }) => {
                                 }
                             },
                             style: 'table',
-                            margin: [10, 5, 10, 10], // نفس margins ديال النصوص
-                            width: 480 // عرض الجدول متطابق مع النصوص
+                            margin: [10, 5, 10, 10], 
+                            width: 480 
                         },
-                        // Signature
                         {
                             text: reverseArabicText('الإمضاء'),
                             style: 'signature',
@@ -270,9 +261,9 @@ const Certificate = ({ data }) => {
             ],
             styles: {
                 header: {
-                    fontSize: 9, // حجم صغير لأول 5 جمل
+                    fontSize: 9, 
                     bold: true,
-                    margin: [0, 1, 0, 1], // فراغ صغير بين الجمل
+                    margin: [0, 1, 0, 1], 
                     font: 'Scheherazade',
                     color: 'black'
                 },
@@ -283,9 +274,9 @@ const Certificate = ({ data }) => {
                     color: 'black'
                 },
                 body: {
-                    fontSize: 14, // حجم أكبر شوية للنص
+                    fontSize: 14,
                     bold: false,
-                    lineHeight: 1.2, // أسطر متجمعة
+                    lineHeight: 1.2, 
                     font: 'Scheherazade',
                     color: 'black'
                 },
@@ -338,7 +329,7 @@ const Certificate = ({ data }) => {
                 alignment: 'right',
                 direction: 'rtl'
             },
-            pageMargins: [10, 40, 10, 40] // margins صغار باش النص يبدا من أقصى اليمين
+            pageMargins: [10, 40, 10, 40] 
         };
 
         try {

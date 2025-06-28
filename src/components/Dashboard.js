@@ -11,26 +11,22 @@ const normalizeValue = (value) => {
   if (!value) return '';
   return String(value).trim().replace(/\s+/g, ' ').toLowerCase();
 };
-
-// دالة لحساب العمر من تاريخ الازدياد
 const calculateAge = (birthDate) => {
   try {
     if (!birthDate || typeof birthDate !== 'string') {
       console.log('Missing or invalid birth date type:', birthDate);
       return null;
     }
-    // فحص صيغة YYYY/MM/DD
     if (!/^\d{4}\/\d{2}\/\d{2}$/.test(birthDate)) {
       console.log('Invalid birth date format (not YYYY/MM/DD):', birthDate);
       return null;
     }
-    // استبعاد placeholder
     if (birthDate === '1900/01/01') {
       console.log('Placeholder birth date detected:', birthDate);
       return null;
     }
-    const today = new Date('2025-05-17'); // التاريخ الحالي
-    const birth = new Date(birthDate.replace(/\//g, '-')); // تحويل YYYY/MM/DD إلى YYYY-MM-DD للتحليل
+    const today = new Date('2025-05-17'); 
+    const birth = new Date(birthDate.replace(/\//g, '-')); 
     if (isNaN(birth.getTime())) {
       console.log('Invalid birth date (cannot parse):', birthDate);
       return null;
@@ -55,8 +51,6 @@ const calculateAge = (birthDate) => {
     return null;
   }
 };
-
-// دالة لتحديد الفئة العمرية
 const getAgeGroup = (age) => {
   if (age >= 18 && age <= 25) return '18-25';
   if (age >= 26 && age <= 35) return '26-35';
@@ -84,7 +78,6 @@ const Dashboard = ({ data, cancelledVoters }) => {
       console.log('Input data:', data);
       console.log('Cancelled voters:', cancelledVoters);
 
-      // تصفية الناخبين حسب الاختيارات
       (data || []).forEach((wilaya) => {
         if (!selectedWilaya || wilaya.wilaya === selectedWilaya) {
           (wilaya.jamaat || []).forEach((jamaa) => {
@@ -104,8 +97,6 @@ const Dashboard = ({ data, cancelledVoters }) => {
       });
 
       console.log('Filtered voters:', voters);
-
-      // استثناء الناخبين المشطوبين
       const activeVoters = voters.filter((voter) => {
         return !(cancelledVoters || []).some((cancelled) =>
           normalizeValue(cancelled.cin) === normalizeValue(voter.cin) &&
@@ -120,8 +111,6 @@ const Dashboard = ({ data, cancelledVoters }) => {
         cin: voter.cin,
         birthDate: voter.birthDate
       })));
-
-      // حساب إحصائيات الجنس
       const genderCounts = activeVoters.reduce(
         (acc, voter) => {
           const genderValue = normalizeValue(voter.gender);
@@ -130,7 +119,7 @@ const Dashboard = ({ data, cancelledVoters }) => {
           } else if (['f'].includes(genderValue)) {
             acc.female += 1;
           } else {
-            acc.male += 1; // افتراضيا
+            acc.male += 1; 
           }
           return acc;
         },
@@ -139,15 +128,11 @@ const Dashboard = ({ data, cancelledVoters }) => {
 
       const total = genderCounts.male + genderCounts.female;
       setTotalVoters(total);
-
-      // تحضير بيانات المخطط للجنس
       const chartData = [
         { name: 'رجال', value: genderCounts.male, percentage: total ? ((genderCounts.male / total) * 100).toFixed(1) : 0 },
         { name: 'نساء', value: genderCounts.female, percentage: total ? ((genderCounts.female / total) * 100).toFixed(1) : 0 },
       ].filter(item => item.value > 0);
       setGenderData(chartData);
-
-      // حساب إحصائيات الفئات العمرية
       const ageGroupCounts = {
         '18-25': 0,
         '26-35': 0,
@@ -190,7 +175,6 @@ const Dashboard = ({ data, cancelledVoters }) => {
         }
       });
 
-      // تحضير بيانات المخطط للفئات العمرية
       const ageChartData = [
         { name: '18-25', value: ageGroupCounts['18-25'], percentage: total ? ((ageGroupCounts['18-25'] / total) * 100).toFixed(1) : 0 },
         { name: '26-35', value: ageGroupCounts['26-35'], percentage: total ? ((ageGroupCounts['26-35'] / total) * 100).toFixed(1) : 0 },
@@ -214,7 +198,6 @@ const Dashboard = ({ data, cancelledVoters }) => {
 
       setAgeData(ageChartData);
 
-      // إيجاد الفئة العمرية الأكثر شيوعا
       const maxAgeGroup = ageChartData.reduce((max, item) => item.value > max.value ? item : max, ageChartData[0]);
       setLargestAgeGroup(maxAgeGroup);
 
@@ -247,7 +230,6 @@ const Dashboard = ({ data, cancelledVoters }) => {
     setSelectedMaktab('');
   };
 
-  // الصفحة الأولى: إحصائيات الجنس
   if (currentPage === 'gender') {
     return (
       <StyledContainer>
@@ -402,7 +384,6 @@ const Dashboard = ({ data, cancelledVoters }) => {
     );
   }
 
-  // الصفحة الثانية: إحصائيات الفئات العمرية
   return (
     <StyledContainer>
       <Title level={3}>لوحة إحصائيات الناخبين</Title>

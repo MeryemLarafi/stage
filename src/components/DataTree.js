@@ -26,7 +26,6 @@ const DataTree = ({ data }) => {
     })),
   }));
 
-  // Render single tree node
   const renderTreeNode = ({ index, style }) => (
     <div style={style}>
       <Tree
@@ -42,9 +41,9 @@ const DataTree = ({ data }) => {
     <StyledTree>
       {treeData.length > 0 ? (
         <List
-          height={600} // Hauteur dyal l-list
-          itemCount={treeData.length} // Nbre dyal l-wilayat
-          itemSize={35} // Taille dyal kol node
+          height={600} 
+          itemCount={treeData.length} 
+          itemSize={35} 
           width="100%"
         >
           {renderTreeNode}

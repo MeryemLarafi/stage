@@ -79,7 +79,7 @@ const Login = () => {
                   placeholder="أدخل الإيميل"
                   aria-label="الإيميل"
                   disabled={loading}
-                  className="text-black" // Changed to black
+                  className="text-black" 
                 />
               </Form.Item>
               <Form.Item
@@ -91,7 +91,7 @@ const Login = () => {
                   placeholder="أدخل كلمة المرور"
                   aria-label="كلمة المرور"
                   disabled={loading}
-                  className="text-black" // Changed to black
+                  className="text-black" 
                 />
               </Form.Item>
               <Form.Item>
@@ -127,7 +127,7 @@ const Login = () => {
                   placeholder="أدخل الإيميل"
                   aria-label="الإيميل"
                   disabled={loading}
-                  className="text-black" // Changed to black
+                  className="text-black" 
                 />
               </Form.Item>
               <Form.Item
@@ -142,7 +142,7 @@ const Login = () => {
                   placeholder="أدخل كلمة المرور"
                   aria-label="كلمة المرور"
                   disabled={loading}
-                  className="text-black" // Changed to black
+                  className="text-black" 
                 />
               </Form.Item>
               <Form.Item
@@ -154,7 +154,7 @@ const Login = () => {
                   placeholder="تأكيد كلمة المرور"
                   aria-label="تأكيد كلمة المرور"
                   disabled={loading}
-                  className="text-black" // Changed to black
+                  className="text-black" 
                 />
               </Form.Item>
               <Form.Item>
